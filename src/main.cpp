@@ -1,6 +1,10 @@
+#include "common.hpp"
+
 #include "scale.hpp"
+#include "format_sup.hpp"
 #include <iostream>
 #include <iomanip>
+#include <fstream>
 using namespace std;
 
 void verify_nn(SubImage& sub) {
@@ -35,8 +39,16 @@ void test_scale() {
 
 int main(int argc, char** argv)
 {
-	(void)argc;
-	(void)argv;
-	test_scale();
-    return 0;
+    if (argc < 1)
+    {
+        test_scale();
+        return 0;
+    }
+    else
+    {
+        std::list<Subtitle> subtitles;
+        std::ifstream* in = new std::ifstream();
+        in->open(argv[1], std::ios_base::in | std::ios_base::binary);
+        return load_sup(in, subtitles) ? 0 : -1;
+    }
 }
