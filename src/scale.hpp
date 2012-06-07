@@ -1,7 +1,7 @@
 #ifndef SCALE_HPP
 #define SCALE_HPP
 
-#include "math.h"
+#include <math.h>
 #include "subtitle.hpp"
 
 struct Pixel {
