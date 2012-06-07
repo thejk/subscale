@@ -16,6 +16,8 @@ public:
     u64 start_s, start_ms;
     u64 duration_ms;
 
+    u32 x, y;
+
     u32 width, height;
     u32* rgba;
 };
