@@ -11,14 +11,19 @@ extern "C" {
 
 #include <list>
 
+typedef uint32_t u32;
+typedef uint64_t u64;
 class Sub
 {
 public:
-    unsigned long start_s, start_ms;
-    unsigned long duration_ms;
+	Sub(u32 w, u32 h)
+	: width(w), height(h) {}
+	
+    u64 start_s, start_ms;
+    u64 duration_ms;
 
-    unsigned int width, height;
-    uint32_t* rgba;
+    u32 width, height;
+    u32* rgba;
 };
 
 class Subs
