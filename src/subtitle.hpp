@@ -1,5 +1,5 @@
-#ifndef SUBS_HPP
-#define SUBS_HPP
+#ifndef SUBTITLE_HPP
+#define SUBTITLE_HPP
 
 #if HAVE_CSTDINT
 # include <cstdint>
@@ -10,15 +10,17 @@ extern "C" {
 #endif
 
 #include <list>
+#include <string>
 
 typedef uint32_t u32;
 typedef uint64_t u64;
-class Sub
+
+class SubImage
 {
 public:
-	Sub(u32 w, u32 h)
+	SubImage(u32 w, u32 h)
 	: width(w), height(h) {}
-	
+
     u64 start_s, start_ms;
     u64 duration_ms;
 
@@ -26,12 +28,14 @@ public:
     u32* rgba;
 };
 
-class Subs
+class Subtitle
 {
 public:
-    typedef std::list<Sub> subs_t;
+    std::string title, lang;
 
-    subs_t subs;
+    typedef std::list<SubImage> subimages_t;
+
+    subimages_t images;
 };
 
-#endif /* SUBS_HPP */
+#endif /* SUBTITLE_HPP */
