@@ -55,13 +55,14 @@ struct NNScaler {
 
 struct BLScaler {
 	void operator()(const SubImage& old, SubImage& scaled, float scale, u32 newx, u32 newy, bool debug) {
-		(void)debug;
-
 		u32 q1x = ceil(newx/scale);
 		u32 q1y = ceil(newy/scale);
 		u32 q2x = floor(newx/scale) + 1;
 		u32 q2y = floor(newy/scale) + 1;
-		
+
+		if(debug)
+			printf("from q1(%d, %d) and q2(%d, %d) to (%d, %d)\n", q1x, q1y, q2x, q2y, newx, newy);
+
 		Pixel p1 = Pixel(old.rgba[q1x + old.width * q1y]) * (1.0f-newx/scale) * (1.0f-newy/scale);
 		Pixel p2 = Pixel(old.rgba[q2x + old.width * q1y]) * newx * (1.0f - newy/scale);
 		Pixel p3 = Pixel(old.rgba[q1x + old.width * q2y]) * (1.0f - newx/scale) * newy;
