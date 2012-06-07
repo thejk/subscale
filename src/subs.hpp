@@ -1,6 +1,16 @@
 #ifndef SUBS_HPP
 #define SUBS_HPP
 
+#if HAVE_CSTDINT
+# include <cstdint>
+#else
+extern "C" {
+# include <stdint.h>
+};
+#endif
+
+#include <list>
+
 class Sub
 {
 public:

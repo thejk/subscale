@@ -1,6 +1,10 @@
 #ifndef COMMON_HPP
 #define COMMON_HPP
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
 #include <cstdlib>
 
 #ifdef DEBUG
