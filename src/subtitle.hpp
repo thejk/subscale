@@ -1,19 +1,9 @@
 #ifndef SUBTITLE_HPP
 #define SUBTITLE_HPP
 
-#if HAVE_CSTDINT
-# include <cstdint>
-#else
-extern "C" {
-# include <stdint.h>
-};
-#endif
-
+#include "common.hpp"
 #include <list>
 #include <string>
-
-typedef uint32_t u32;
-typedef uint64_t u64;
 
 class SubImage
 {
