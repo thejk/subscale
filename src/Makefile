@@ -12,7 +12,7 @@ clean:
 subscale: main.o format_sup.o
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
-main.o: main.cpp common.hpp subtitle.hpp
+main.o: main.cpp common.hpp subtitle.hpp scale.hpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 format_sup.o: format_sup.cpp format_sup.hpp subtitle.hpp common.hpp
