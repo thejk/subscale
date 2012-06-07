@@ -1,4 +1,6 @@
 #include "scale.hpp"
+#include <iostream>
+using namespace std;
 
 void test_scale() {
 	u32 size = 4;
@@ -8,7 +10,13 @@ void test_scale() {
 			img.rgba[x+4*y] = x+4*y;
 		}
 	}
-	SubImage scaled = scale_nn(img, 0.5f, true);
+	cout <<"Testing nearest-neighbor scaling" <<endl;
+	SubImage scaled_nn = scale_nn(img, 0.5f, true);
+	cout <<"done" <<endl;
+
+	cout <<"Testing bilinear scaling" <<endl;
+	SubImage scaled_bl = scale_bl(img, 0.5f, true);
+	cout <<"done" <<endl;
 }
 
 int main(int argc, char** argv)
