@@ -264,6 +264,8 @@ public:
     u8 palette_id;
     typedef std::list<Object> object_list;
     object_list objects;
+
+    u32 presentation, decoding;
 };
 
 #ifdef DEBUG_OUTPUT
@@ -395,6 +397,8 @@ bool read_segments(std::istream* in, Subtitle& subtitle)
                 std::cerr << "bad timecode" << std::endl;
                 return false;
             }
+            timecode.presentation = presentation;
+            timecode.decoding = decoding;
 #ifdef DEBUG_OUTPUT
             std::cerr << "timecode: " << timecode << std::endl;
 #endif
@@ -684,6 +688,19 @@ bool create_subimage(Subtitle& subtitle, entry& last, entry& current)
         }
     }
 
+    /* 90kHz */
+    u64 start_s = last_tc.presentation / 90000;
+    u64 start_ns = (last_tc.presentation % 90000) * 11111;
+    u64 duration_s = current_tc.presentation / 90000;
+    u64 duration_ns = (current_tc.presentation % 90000) * 11111;
+    duration_s -= start_s;
+    if (duration_ns < start_ns)
+    {
+        duration_s -= 1;
+        duration_ns += 1000000000ul;
+    }
+    duration_ns -= start_ns;
+
     for (Timecode::object_list::iterator i(last_tc.objects.begin());
          i != last_tc.objects.end(); ++i)
     {
@@ -692,6 +709,10 @@ bool create_subimage(Subtitle& subtitle, entry& last, entry& current)
         subimg.x = wnd.x;
         subimg.y = wnd.y;
         subimg.forced = (i->flags & OBJ_FLAG_FORCED_ON);
+        subimg.start_s = start_s;
+        subimg.start_ns = start_ns;
+        subimg.duration_s = duration_s;
+        subimg.duration_ns = duration_ns;
 
         render(subimg, last.palettes[last_tc.palette_id], last.images);
 
