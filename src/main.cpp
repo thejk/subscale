@@ -72,17 +72,30 @@ int main(int argc, char** argv)
         load_sup(in, subtitles);
         delete in;
         unsigned int i = 1;
+        std::ofstream* out = new std::ofstream();
+        out->open("test.txt", std::ios_base::out);
         for (std::list<Subtitle>::iterator sub(subtitles.begin()); sub != subtitles.end(); ++sub, ++i)
         {
             unsigned int j = 1;
             for (Subtitle::subimages_t::iterator subimg(sub->images.begin()); subimg != sub->images.end(); ++subimg, ++j)
             {
-                char filename[50];
+                char filename[50], tmp[50];
                 snprintf(filename, sizeof(filename), "test%02u-%02u.bmp",
                          i, j);
                 SubImage scaled = scale_bl(*subimg, factor);
                 writeBitmap(filename, scaled);
+                /* time in hh:mm:ss.ms, duration ss.ms */
+                snprintf(tmp, sizeof(tmp), "%02u:%02u:%02u.%03u, %02u.%03u",
+                         (unsigned int)(subimg->start_s / (60 * 60)),
+                         (unsigned int)((subimg->start_s % (60 * 60)) / 60),
+                         (unsigned int)(subimg->start_s % 60),
+                         (unsigned int)(subimg->start_ns / 1000000ul),
+                         (unsigned int)subimg->duration_s,
+                         (unsigned int)(subimg->duration_ns / 1000000ul));
+                *out << tmp << ": " << filename << std::endl;
             }
         }
+        out->close();
+        delete out;
     }
 }
