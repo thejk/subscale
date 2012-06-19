@@ -347,16 +347,12 @@ bool read_segments(std::istream* in, Subtitle& subtitle)
             std::cerr << "palette: " << palette << std::endl;
 #endif
             palette_map::iterator i = palettes.find(palette.id);
-            palette_list lst;
             if (i == palettes.end())
             {
-                palettes.insert(std::make_pair(palette.id, lst));
+                i = palettes.insert(std::make_pair(palette.id,
+                                                   palette_list())).first;
             }
-            else
-            {
-                lst = i->second;
-            }
-            lst.push_back(palette);
+            i->second.push_back(palette);
             break;
         }
         case SEGMENT_TYPE_IMAGE:
@@ -371,16 +367,11 @@ bool read_segments(std::istream* in, Subtitle& subtitle)
             std::cerr << "image: " << image << std::endl;
 #endif
             image_map::iterator i = images.find(image.id);
-            image_list lst;
             if (i == images.end())
             {
-                images.insert(std::make_pair(image.id, lst));
+                i = images.insert(std::make_pair(image.id, image_list())).first;
             }
-            else
-            {
-                lst = i->second;
-            }
-            lst.push_back(image);
+            i->second.push_back(image);
             break;
         }
         case SEGMENT_TYPE_TIMECODES:
