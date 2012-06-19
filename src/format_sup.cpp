@@ -320,7 +320,7 @@ static bool create_subimage(Subtitle& subtitle, entry& last, entry& current);
 
 bool read_segments(std::istream* in, Subtitle& subtitle)
 {
-    unsigned int count = 0;
+    unsigned int start = subtitle.images.size();
     entry last, current;
     for (;;)
     {
@@ -332,7 +332,7 @@ bool read_segments(std::istream* in, Subtitle& subtitle)
         in->read(id, sizeof(id));
         if (in->eof() && in->gcount() == 0)
         {
-            return count > 0;
+            return subtitle.images.size() > start;
         }
         presentation = readu32(in);
         decoding = readu32(in);
