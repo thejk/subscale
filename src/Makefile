@@ -9,11 +9,14 @@ all: subscale
 clean:
 	rm -f *.o subscale
 
-subscale: main.o format_sup.o
+subscale: main.o format_sup.o bitmap.o
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 main.o: main.cpp common.hpp subtitle.hpp scale.hpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 format_sup.o: format_sup.cpp format_sup.hpp subtitle.hpp common.hpp
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+bitmap.o: bitmap.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<

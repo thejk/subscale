@@ -3,6 +3,7 @@
 
 #include <math.h>
 #include "subtitle.hpp"
+#include "iostream"
 
 struct Pixel {
 	Pixel(u32 rgba) {
@@ -42,6 +43,10 @@ struct Pixel {
 	}
 	u8* data;
 };
+std::ostream& operator<<(std::ostream& out, Pixel& p) {
+	out <<"(" <<p.data[0] <<", " <<p.data[1] <<", " <<p.data[2] <<")";
+	return out;
+}
 
 struct NNScaler {
 	void operator()(const SubImage& old, SubImage& scaled, float scale, u32 newx, u32 newy, bool debug) {
