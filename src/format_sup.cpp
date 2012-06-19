@@ -84,10 +84,12 @@ public:
     u8 y, cr, cb, alpha;
 };
 
+#ifdef DEBUG_OUTPUT
 static std::ostream& operator<<(std::ostream& out, const PaletteEntry& entry)
 {
     return out << "[#" << (int)entry.index << " Y:" << (int)entry.y << " Cr:" << (int)entry.cr << " Cb:" << (int)entry.cb << " A:" << (int)entry.alpha << ']';
 }
+#endif
 
 class Palette
 {
@@ -97,6 +99,7 @@ public:
     entry_list entries;
 };
 
+#ifdef DEBUG_OUTPUT
 static std::ostream& operator<<(std::ostream& out, const Palette& pal)
 {
     out << "{id:" << (int)pal.id << "/" << (int)pal.version << " entries:";
@@ -106,6 +109,7 @@ static std::ostream& operator<<(std::ostream& out, const Palette& pal)
     // }
     return out << '}';
 }
+#endif
 
 enum image_flags_t
 {
@@ -185,10 +189,12 @@ public:
     RefData<u8>* data;
 };
 
+#ifdef DEBUG_OUTPUT
 static std::ostream& operator<<(std::ostream& out, const Image& img)
 {
     return out << "{id:" << img.id << "/" << (int)img.version << " first:" << ((img.flags & IMAGE_FLAG_FIRST) ? 'Y' : 'N') << " last:" << ((img.flags & IMAGE_FLAG_LAST) ? 'Y' : 'N') << " size:" << img.width << "x" << img.height << " total: " << img.total << " bytes:" << img.size << '}';
 }
+#endif
 
 class Window
 {
@@ -198,10 +204,12 @@ public:
     u16 width, height;
 };
 
+#ifdef DEBUG_OUTPUT
 static std::ostream& operator<<(std::ostream& out, const Window& wnd)
 {
     return out << "{id:" << (int)wnd.id << " pos:" << wnd.x << "x" << wnd.y << " size:" << wnd.width << "x" << wnd.height << '}';
 }
+#endif
 
 enum object_flags_t
 {
@@ -218,10 +226,12 @@ public:
     u16 x, y;
 };
 
+#ifdef DEBUG_OUTPUT
 static std::ostream& operator<<(std::ostream& out, const Object& obj)
 {
     return out << "{id:" << obj.id << " window:" << (int)obj.window_id << " cropped:" << ((obj.flags & OBJ_FLAG_CROPPED) ? 'Y' : 'N') << " forced:" << ((obj.flags & OBJ_FLAG_FORCED_ON) ? 'Y' : 'N') << " pos:" << obj.x << 'x' << obj.y << '}';
 }
+#endif
 
 enum fps_t
 {
@@ -253,6 +263,7 @@ public:
     object_list objects;
 };
 
+#ifdef DEBUG_OUTPUT
 static const char* fps2str(fps_t fps)
 {
     switch (fps)
@@ -264,7 +275,9 @@ static const char* fps2str(fps_t fps)
     }
     return "unknown";
 }
+#endif
 
+#ifdef DEBUG_OUTPUT
 static std::ostream& operator<<(std::ostream& out, const Timecode& tc)
 {
     out << "{size: " << tc.width << 'x' << tc.height << " fps:" << fps2str(tc.fps) << " component(num:" << tc.comp_num << " state:" << (int)tc.comp_state << ") palette_flags:" << (int)tc.palette_flags << " palette:" << (int)tc.palette_id << " objects:";
@@ -274,6 +287,7 @@ static std::ostream& operator<<(std::ostream& out, const Timecode& tc)
     }
     return out << '}';
 }
+#endif
 
 static bool read_palette(std::istream* in, Palette& palette, u16 length);
 static bool read_image(std::istream* in, Image& image, u16 length);
@@ -316,7 +330,9 @@ bool read_segments(std::istream* in, Subtitle& subtitle)
             std::cerr << "bad segment" << std::endl;
             return false;
         }
+#ifdef DEBUG_OUTPUT
         std::cerr << "\tpts: " << presentation << " dts: " << decoding << std::endl;
+#endif
         switch (type)
         {
         case SEGMENT_TYPE_PALETTE:
@@ -327,7 +343,9 @@ bool read_segments(std::istream* in, Subtitle& subtitle)
                 std::cerr << "bad palette" << std::endl;
                 return false;
             }
+#ifdef DEBUG_OUTPUT
             std::cerr << "palette: " << palette << std::endl;
+#endif
             palette_map::iterator i = palettes.find(palette.id);
             palette_list lst;
             if (i == palettes.end())
@@ -349,7 +367,9 @@ bool read_segments(std::istream* in, Subtitle& subtitle)
                 std::cerr << "bad image" << std::endl;
                 return false;
             }
+#ifdef DEBUG_OUTPUT
             std::cerr << "image: " << image << std::endl;
+#endif
             image_map::iterator i = images.find(image.id);
             image_list lst;
             if (i == images.end())
@@ -371,7 +391,9 @@ bool read_segments(std::istream* in, Subtitle& subtitle)
                 std::cerr << "bad timecode" << std::endl;
                 return false;
             }
+#ifdef DEBUG_OUTPUT
             std::cerr << "timecode: " << timecode << std::endl;
+#endif
             break;
         }
         case SEGMENT_TYPE_WINDOW:
@@ -394,7 +416,9 @@ bool read_segments(std::istream* in, Subtitle& subtitle)
                     std::cerr << "bad window (2)" << std::endl;
                     return false;
                 }
+#ifdef DEBUG_OUTPUT
                 std::cerr << "window: " << window << std::endl;
+#endif
                 windows.push_back(window);
                 pos += ret;
             }
@@ -410,7 +434,9 @@ bool read_segments(std::istream* in, Subtitle& subtitle)
             {
                 return false;
             }
+#ifdef DEBUG_OUTPUT
             std::cerr << "end" << std::endl << std::endl;
+#endif
             break;
         default:
             std::cerr << "unknown: " << type << std::endl;
