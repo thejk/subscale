@@ -20,12 +20,19 @@ public:
 
     u32 width, height;
     u32* rgba;
+
+    bool forced;
 };
 
 class Subtitle
 {
 public:
     std::string title, lang;
+
+    /* screen size, 0 if unknown */
+    u32 width, height;
+    /* fps, 0 if unknown */
+    u16 fps;
 
     typedef std::list<SubImage> subimages_t;
 
