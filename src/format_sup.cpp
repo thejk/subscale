@@ -4,6 +4,9 @@
 
 #include <map>
 #include <utility>
+#include <vector>
+
+#include <cstring>
 
 static bool read_segments(std::istream* in, Subtitle& subtitle);
 
@@ -295,20 +298,30 @@ static long read_window(std::istream* in, Window& window, u16 length);
 static bool read_timecode(std::istream* in, Timecode& timecode, u16 length);
 static long read_object(std::istream* in, Object& object, u16 length);
 
-typedef std::list<Palette> palette_list;
+typedef std::vector<Palette> palette_list;
 typedef std::map<u8, palette_list> palette_map;
 
-typedef std::list<Image> image_list;
+typedef std::vector<Image> image_list;
 typedef std::map<u16, image_list> image_map;
 
-typedef std::list<Window> window_list;
+typedef std::vector<Window> window_list;
+
+typedef std::list<Timecode> timecode_list;
+
+struct entry
+{
+    palette_map palettes;
+    image_map images;
+    window_list windows;
+    timecode_list timecodes;
+};
+
+static bool create_subimage(Subtitle& subtitle, entry& last, entry& current);
 
 bool read_segments(std::istream* in, Subtitle& subtitle)
 {
     unsigned int count = 0;
-    palette_map palettes;
-    image_map images;
-    window_list windows;
+    entry last, current;
     for (;;)
     {
         char id[2];
@@ -346,11 +359,11 @@ bool read_segments(std::istream* in, Subtitle& subtitle)
 #ifdef DEBUG_OUTPUT
             std::cerr << "palette: " << palette << std::endl;
 #endif
-            palette_map::iterator i = palettes.find(palette.id);
-            if (i == palettes.end())
+            palette_map::iterator i = current.palettes.find(palette.id);
+            if (i == current.palettes.end())
             {
-                i = palettes.insert(std::make_pair(palette.id,
-                                                   palette_list())).first;
+                i = current.palettes.insert(std::make_pair(palette.id,
+                                                           palette_list())).first;
             }
             i->second.push_back(palette);
             break;
@@ -366,10 +379,10 @@ bool read_segments(std::istream* in, Subtitle& subtitle)
 #ifdef DEBUG_OUTPUT
             std::cerr << "image: " << image << std::endl;
 #endif
-            image_map::iterator i = images.find(image.id);
-            if (i == images.end())
+            image_map::iterator i = current.images.find(image.id);
+            if (i == current.images.end())
             {
-                i = images.insert(std::make_pair(image.id, image_list())).first;
+                i = current.images.insert(std::make_pair(image.id, image_list())).first;
             }
             i->second.push_back(image);
             break;
@@ -385,6 +398,7 @@ bool read_segments(std::istream* in, Subtitle& subtitle)
 #ifdef DEBUG_OUTPUT
             std::cerr << "timecode: " << timecode << std::endl;
 #endif
+            current.timecodes.push_back(timecode);
             break;
         }
         case SEGMENT_TYPE_WINDOW:
@@ -410,7 +424,7 @@ bool read_segments(std::istream* in, Subtitle& subtitle)
 #ifdef DEBUG_OUTPUT
                 std::cerr << "window: " << window << std::endl;
 #endif
-                windows.push_back(window);
+                current.windows.push_back(window);
                 pos += ret;
             }
             if (pos < length)
@@ -428,6 +442,7 @@ bool read_segments(std::istream* in, Subtitle& subtitle)
 #ifdef DEBUG_OUTPUT
             std::cerr << "end" << std::endl << std::endl;
 #endif
+            create_subimage(subtitle, last, current);
             break;
         default:
             std::cerr << "unknown: " << type << std::endl;
@@ -435,6 +450,239 @@ bool read_segments(std::istream* in, Subtitle& subtitle)
             break;
         }
     }
+}
+
+static void reset_entry(entry& entry)
+{
+    entry.timecodes.clear();
+    entry.windows.clear();
+    entry.palettes.clear();
+    entry.images.clear();
+}
+
+static void transfer_entry(entry& dst, entry& src)
+{
+    reset_entry(dst);
+    for (timecode_list::iterator i(src.timecodes.begin()); i != src.timecodes.end(); ++i)
+    {
+        dst.timecodes.push_back(*i);
+    }
+    for (window_list::iterator i(src.windows.begin()); i != src.windows.end(); ++i)
+    {
+        dst.windows.push_back(*i);
+    }
+    for (palette_map::iterator i(src.palettes.begin()); i != src.palettes.end(); ++i)
+    {
+        dst.palettes.insert(*i);
+    }
+    for (image_map::iterator i(src.images.begin()); i != src.images.end(); ++i)
+    {
+        dst.images.insert(*i);
+    }
+    reset_entry(src);
+}
+
+static bool render(SubImage& subimg, palette_list palettes, image_map images)
+{
+    if (images.size() != 1)
+    {
+        std::cerr << "other than one image id per timecode is not supported" << std::endl;
+        return false;
+    }
+    if (palettes.size() != 1)
+    {
+        std::cerr << "other than one palette per timecode is not supported" << std::endl;
+        return false;
+    }
+    std::memset(subimg.rgba, 0, subimg.width * subimg.height * sizeof(u32));
+    image_list imgs = images[0];
+    Image first = imgs.front();
+    Image last = imgs.back();
+    if ((first.flags & IMAGE_FLAG_FIRST) == 0 ||
+        (last.flags & IMAGE_FLAG_LAST) == 0)
+    {
+        std::cerr << "invalid image sequence" << std::endl;
+        return false;
+    }
+    u8 extended = 0;
+    u8 arg1 = 0, arg2 = 0;
+    u32* row = subimg.rgba;
+    u32* pixel = row;
+    u32 palette[256];
+    u16 size;
+    for (Palette::entry_list::iterator entry(palettes.front().entries.begin());
+         entry != palettes.front().entries.end(); entry++)
+    {
+        u8 r, g, b, a;
+        const float y = 298.082 * entry->y;
+        r = (u16)(y +                       408.583 * entry->cr - 57067.776) >> 8;
+        g = (u16)(y - 100.291 * entry->cb - 208.120 * entry->cr + 34707.456) >> 8;
+        b = (u16)(y + 516.412 * entry->cb                       - 70870.016) >> 8;
+        a = entry->alpha;
+        palette[entry->index] = (r << 24) | (g << 16) | (b << 8) | a;
+    }
+    for (image_list::iterator img(imgs.begin()); img != imgs.end(); ++img)
+    {
+        u8* ptr = img->data->ptr;
+        for (u16 i = 0; i < img->size; i++, ptr++)
+        {
+            switch (extended)
+            {
+            case 0:
+                if (*ptr == 0)
+                {
+                    /* 00 ... */
+                    extended = 1;
+                }
+                else
+                {
+                    /* Standard pixel */
+                    *pixel++ = palette[*ptr];
+                }
+                break;
+            case 1:
+                if (*ptr == 0)
+                {
+                    /* 00 00 -> new line */
+                    row += subimg.width;
+                    pixel = row;
+                    extended = 0;
+                }
+                else if ((*ptr & 0xc0) == 0x00)
+                {
+                    /* 00 0x -> x zeroes */
+                    size = *ptr;
+                    while (size-- > 0)
+                    {
+                        *pixel++ = palette[0];
+                    }
+                    extended = 0;
+                }
+                else
+                {
+                    extended = 2;
+                    arg1 = *ptr;
+                }
+                break;
+            case 2:
+                switch (arg1 & 0xc0)
+                {
+                case 0x40:
+                    /* 00 4x yy -> xyy zeroes */
+                    size = ((arg1 & 0x3f) << 8) + *ptr;
+                    while (size-- > 0)
+                    {
+                        *pixel++ = palette[0];
+                    }
+                    extended = 0;
+                    break;
+                case 0x80:
+                    /* 00 8x yy -> x times value yy */
+                    size = arg1 & 0x3f;
+                    while (size-- > 0)
+                    {
+                        *pixel++ = palette[*ptr];
+                    }
+                    extended = 0;
+                    break;
+                case 0xc0:
+                    arg2 = *ptr;
+                    extended = 3;
+                    break;
+                default:
+                    std::cerr << "invalid rle code" << std::endl;
+                    return false;
+                }
+                break;
+            case 3:
+                /* 00 cx yy zz -> xyy times value zz */
+                size = ((arg1 & 0x3f) << 8) | arg2;
+                while (size-- > 0)
+                {
+                    *pixel++ = palette[*ptr];
+                }
+                extended = 0;
+                break;
+            }
+        }
+    }
+    return true;
+}
+
+bool create_subimage(Subtitle& subtitle, entry& last, entry& current)
+{
+    if (current.timecodes.empty())
+    {
+        std::cerr << "entry without timecodes" << std::endl;
+        reset_entry(last);
+        reset_entry(current);
+        return false;
+    }
+    if (current.timecodes.size() > 1)
+    {
+        std::cerr << "multiple timecodes before end?" << std::endl;
+        reset_entry(last);
+        reset_entry(current);
+        return false;
+    }
+    Timecode current_tc = current.timecodes.front();
+    if ((current_tc.comp_state & TIMECODE_COMP_STATE_EPOCH_START) != 0)
+    {
+        if (!last.timecodes.empty())
+        {
+            std::cerr << "both last and current are start timecodes" << std::endl;
+            reset_entry(last);
+        }
+        transfer_entry(last, current);
+        return true;
+    }
+    else
+    {
+        if (last.timecodes.empty())
+        {
+            std::cerr << "two non-start timecodes after each other" << std::endl;
+            reset_entry(last);
+            reset_entry(current);
+            return false;
+        }
+    }
+
+    Timecode last_tc = last.timecodes.front();
+
+    if (subtitle.width == 0)
+    {
+        subtitle.width = last_tc.width;
+        subtitle.height = last_tc.height;
+    }
+    if (subtitle.fps == 0 && last_tc.fps != TIMECODE_FPS_UNKNOWN)
+    {
+        switch (last_tc.fps)
+        {
+        case TIMECODE_FPS_24:
+            subtitle.fps = 24;
+            break;
+        case TIMECODE_FPS_UNKNOWN:
+            break;
+        }
+    }
+
+    for (Timecode::object_list::iterator i(last_tc.objects.begin());
+         i != last_tc.objects.end(); ++i)
+    {
+        Window wnd = last.windows[i->window_id];
+        SubImage subimg(wnd.width, wnd.height);
+        subimg.x = wnd.x;
+        subimg.y = wnd.y;
+        subimg.forced = (i->flags & OBJ_FLAG_FORCED_ON);
+
+        render(subimg, last.palettes[last_tc.palette_id], last.images);
+
+        subtitle.images.push_back(subimg);
+    }
+
+    reset_entry(last);
+    reset_entry(current);
+    return true;
 }
 
 bool read_palette(std::istream* in, Palette& palette, u16 length)
