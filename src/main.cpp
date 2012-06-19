@@ -56,23 +56,19 @@ void test_scale() {
 
 int main(int argc, char** argv)
 {
-    if (argc < 2)
+    if (*argv[1] == 't')
     {
         test_scale();
         return 0;
     }
-    else if(*argv[1] == 'r')
-    {
-        std::list<Subtitle> subtitles;
-        std::ifstream* in = new std::ifstream();
-        in->open(argv[2], std::ios_base::in | std::ios_base::binary);
-        return load_sup(in, subtitles) ? 0 : -1;
-    }
     else if(*argv[1] == 'w')
     {
+    	assert(argc == 4);
+    	float factor = atof(argv[2]);
+    	cout <<"Scaling factor " <<factor <<endl;
     	std::list<Subtitle> subtitles;
         std::ifstream* in = new std::ifstream();
-        in->open(argv[2], std::ios_base::in | std::ios_base::binary);
+        in->open(argv[3], std::ios_base::in | std::ios_base::binary);
         load_sup(in, subtitles);
         unsigned int i = 1;
         for (std::list<Subtitle>::iterator sub(subtitles.begin()); sub != subtitles.end(); ++sub, ++i)
@@ -83,7 +79,8 @@ int main(int argc, char** argv)
                 char filename[50];
                 snprintf(filename, sizeof(filename), "test%02u-%02u.bmp",
                          i, j);
-                writeBitmap(filename, *subimg);
+                SubImage scaled = scale_bl(*subimg, factor);
+                writeBitmap(filename, scaled);
             }
         }
     }
