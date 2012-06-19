@@ -13,8 +13,10 @@ public:
 		rgba = new u32[w*h];
 	}
 
-    u64 start_s, start_ms;
-    u64 duration_ms;
+    u64 start_s;
+    u64 start_ns;
+    u64 duration_s;
+    u64 duration_ns;
 
     u32 x, y;
 
