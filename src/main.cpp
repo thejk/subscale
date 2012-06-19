@@ -74,15 +74,17 @@ int main(int argc, char** argv)
         std::ifstream* in = new std::ifstream();
         in->open(argv[2], std::ios_base::in | std::ios_base::binary);
         load_sup(in, subtitles);
-        /*u32 size = 16;
-		SubImage img(size,size);
-		for(u32 y = 0; y < size; ++y) {
-			for(u32 x = 0; x < size; ++x) {
-				img.rgba[x + size * y] = (x + size * y) <<24 | 0xFF;
-			}
-		}*/
-		assert(subtitles.size() > 0);
-		assert(subtitles.front().images.size() > 0);
-        writeBitmap("test.bmp", subtitles.front().images.front());
+        unsigned int i = 1;
+        for (std::list<Subtitle>::iterator sub(subtitles.begin()); sub != subtitles.end(); ++sub, ++i)
+        {
+            unsigned int j = 1;
+            for (Subtitle::subimages_t::iterator subimg(sub->images.begin()); subimg != sub->images.end(); ++subimg, ++j)
+            {
+                char filename[50];
+                snprintf(filename, sizeof(filename), "test%02u-%02u.bmp",
+                         i, j);
+                writeBitmap(filename, *subimg);
+            }
+        }
     }
 }
