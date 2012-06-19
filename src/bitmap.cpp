@@ -14,13 +14,11 @@ struct FileHeader {
 	u32 offset;
 };
 ostream& operator<<(ostream& stream, FileHeader header) {
-	cout <<"before FileHeader write, pos = " <<stream.tellp() <<endl;
 	stream.write((const char*)&header.id1, 1);
 	stream.write((const char*)&header.id2, 1);
 	stream.write((const char*)&header.fileSize, 4);
 	stream.write((const char*)&header.reserved, 4);
 	stream.write((const char*)&header.offset, 4);
-	cout <<"after FileHeader write, pos = " <<stream.tellp() <<endl;
 	return stream;
 }
 
@@ -47,7 +45,6 @@ struct DIBHeader {
 	u32 numImportColours;
 };
 ostream& operator<<(ostream& stream, DIBHeader header) {
-	cout <<"before DIBHeader write, pos = " <<stream.tellp() <<endl;
 	stream.write((const char*)&header.headerSize, 4);
 	stream.write((const char*)&header.width, 4);
 	stream.write((const char*)&header.height, 4);
@@ -59,7 +56,6 @@ ostream& operator<<(ostream& stream, DIBHeader header) {
 	stream.write((const char*)&header.verticalRes, 4);
 	stream.write((const char*)&header.numColourInPalette, 4);
 	stream.write((const char*)&header.numImportColours, 4);
-	cout <<"after DIBHeader write, pos = " <<stream.tellp() <<endl;
 	return stream;
 }
 
@@ -80,19 +76,16 @@ inline u32 rgba_to_bgr(u32 rgba) {
 	data[2] = (rgba & 0xFF000000) >>24; //red
 	data[3] = 0x0;
 	u32 val = *(u32*)&data[0];
-	cout <<"bgr(" <<(u16)data[0] <<", " <<(u16)data[1] <<", " <<(u16)data[2] <<") = " <<val <<endl;
 	return val;
 }
 
 void writeImage(ofstream& stream, SubImage& sub) {
-	cout <<"before Image write, pos = " <<stream.tellp() <<endl;
-	for(u32 y = 0; y < sub.height; ++y) {
+	for(s32 y = sub.height-1; y >= 0 ; --y) {
 		for(u32 x = 0; x < sub.width; ++x) {
 			u32 bgr = rgba_to_bgr(sub.rgba[x+y*sub.width]);
 			stream.write((const char*)&bgr, 4);
 		}
 	}
-	cout <<"before Image write, pos = " <<stream.tellp() <<endl;
 	stream.flush();
 }
 
@@ -105,13 +98,11 @@ void writeFileSize(ofstream& stream, std::string path) {
 }
 
 void writeBitmap(std::string path, SubImage& sub) {
-	cout <<"size fh: " << sizeof(FileHeader) <<endl;
-	cout <<"size dh: " << sizeof(DIBHeader) <<endl;
-	cout <<"size: +" << sizeof(FileHeader) + sizeof(DIBHeader) <<endl;
 	ofstream writer(path.c_str(), ios::trunc | ios::binary);
 	writeFileHeader(writer);
 	writeDIBHeader(writer, sub);
 	writeImage(writer, sub);
 	writeFileSize(writer, path);
 	writer.close();
+	cout <<"Bitmap written" <<endl;
 }
