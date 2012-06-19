@@ -482,6 +482,24 @@ static void transfer_entry(entry& dst, entry& src)
     reset_entry(src);
 }
 
+static inline void ycrcb2rgb_iturbt601(u8 y, u8 cr, u8 cb, u8 &r, u8 &g, u8 &b)
+{
+    /* Kb = 0.114, Kr = 0.299 */
+    const float _y = 298.082 * y;
+    r = (u16)(_y                + 408.583 * cr - 57067.776) >> 8;
+    g = (u16)(_y - 100.291 * cb - 208.120 * cr + 34707.456) >> 8;
+    b = (u16)(_y + 516.412 * cb                - 70870.016) >> 8;
+}
+
+static inline void ycrcb2rgb_iturbt709(u8 y, u8 cr, u8 cb, u8 &r, u8 &g, u8 &b)
+{
+    /* Kb = 0.0722, Kr = 0.2126 */
+    const float _y = 298.082 * y;
+    r = (u16)(_y                + 458.942 * cr - 63513.600) >> 8;
+    g = (u16)(_y -  54.592 * cb - 136.425 * cr + 19680.768) >> 8;
+    b = (u16)(_y + 540.775 * cb                - 73988.352) >> 8;
+}
+
 static bool render(SubImage& subimg, palette_list palettes, image_map images)
 {
     if (images.size() != 1)
@@ -513,13 +531,13 @@ static bool render(SubImage& subimg, palette_list palettes, image_map images)
     for (Palette::entry_list::iterator entry(palettes.front().entries.begin());
          entry != palettes.front().entries.end(); entry++)
     {
-        u8 r, g, b, a;
-        const float y = 298.082 * entry->y;
-        r = (u16)(y +                       408.583 * entry->cr - 57067.776) >> 8;
-        g = (u16)(y - 100.291 * entry->cb - 208.120 * entry->cr + 34707.456) >> 8;
-        b = (u16)(y + 516.412 * entry->cb                       - 70870.016) >> 8;
-        a = entry->alpha;
-        palette[entry->index] = (r << 24) | (g << 16) | (b << 8) | a;
+        u8 r, g, b;
+#if 0
+        ycrcb2rgb_iturbt601(entry->y, entry->cr, entry->cb, r, g, b);
+#else
+        ycrcb2rgb_iturbt709(entry->y, entry->cr, entry->cb, r, g, b);
+#endif
+        palette[entry->index] = (r << 24) | (g << 16) | (b << 8) | entry->alpha;
     }
     for (image_list::iterator img(imgs.begin()); img != imgs.end(); ++img)
     {
