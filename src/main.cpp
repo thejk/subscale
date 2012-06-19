@@ -70,6 +70,7 @@ int main(int argc, char** argv)
         std::ifstream* in = new std::ifstream();
         in->open(argv[3], std::ios_base::in | std::ios_base::binary);
         load_sup(in, subtitles);
+        delete in;
         unsigned int i = 1;
         for (std::list<Subtitle>::iterator sub(subtitles.begin()); sub != subtitles.end(); ++sub, ++i)
         {
