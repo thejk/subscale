@@ -70,17 +70,19 @@ int main(int argc, char** argv)
     }
     else if(*argv[1] == 'w')
     {
-    	/*std::list<Subtitle> subtitles;
+    	std::list<Subtitle> subtitles;
         std::ifstream* in = new std::ifstream();
         in->open(argv[2], std::ios_base::in | std::ios_base::binary);
-        load_sup(in, subtitles);*/
-        u32 size = 16;
+        load_sup(in, subtitles);
+        /*u32 size = 16;
 		SubImage img(size,size);
 		for(u32 y = 0; y < size; ++y) {
 			for(u32 x = 0; x < size; ++x) {
 				img.rgba[x + size * y] = (x + size * y) <<24 | 0xFF;
 			}
-		}
-        writeBitmap("test.bmp", img);
+		}*/
+		assert(subtitles.size() > 0);
+		assert(subtitles.front().images.size() > 0);
+        writeBitmap("test.bmp", subtitles.front().images.front());
     }
 }
