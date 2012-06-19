@@ -10,3 +10,9 @@
 *.lai
 *.la
 *.a
+
+# Bitmaps
+*.bmp
+
+# MacOS X crap
+.DS_Store
