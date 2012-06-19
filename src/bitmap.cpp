@@ -104,5 +104,4 @@ void writeBitmap(std::string path, SubImage& sub) {
 	writeImage(writer, sub);
 	writeFileSize(writer, path);
 	writer.close();
-	cout <<"Bitmap written" <<endl;
 }
